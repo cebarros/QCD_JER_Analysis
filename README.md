@@ -22,10 +22,10 @@ For running on LPC, we follow the instructions from **[lpcjobqueue](https://gith
 
 ```
 kinit <username>@FNAL.GOV
-ssh -L localhost:8888:localhost:8888  <username>@cmslpc-sl7.fnal.gov
+ssh <username>@cmslpc-sl7.fnal.gov -L 8888:localhost:8888
 ```
 
-Next you must obatin a voms ticket, make a working area, and clone this repository to that area:
+Next we must obatin a voms ticket, make a working area, and clone this repository to that area:
 
 ```
 voms-proxy-init -voms cms
@@ -34,19 +34,27 @@ cd working_directory
 git clone https://github.com/cebarros/Jet_Analysis.git
 ```
 
-We can now run the following commands to create a Singularity apptainer shell with a coffea environment:
+We can now run the following commands to create a Singularity apptainer shell with a Coffea 0.7 environment:
 
 ```
 curl -OL https://raw.githubusercontent.com/CoffeaTeam/lpcjobqueue/main/bootstrap.sh
 bash bootstrap.sh
-./shell
-jupyter-lab
+rm bootstrap.sh
+./shell coffeateam/coffea-dask-cc7:0.7.22-py3.10-g7f049
+jupyter lab --no-browser --port 8888
 ```
 
 If successful, you should have an output with a URL simlar to:
 
 ```
-http://127.0.0.1:8888/lab?token=37193e107b0cbe947108fcaef2d6ecf3d507c2306bbae0ea
+http://localhost:8888/?token=...
 ```
 
-Copy this URL and paste it into your browser to start the analysis.
+Copy this URL and paste it into your browser to start the analysis. Once this has all been set up, you only need to run:
+
+```
+./shell coffeateam/coffea-dask-cc7:0.7.22-py3.10-g7f049
+jupyter lab --no-browser --port 8888
+```
+
+To resume if disconnected or logged out.
