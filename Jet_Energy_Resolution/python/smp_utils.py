@@ -18,6 +18,7 @@ from coffea.jetmet_tools import JECStack, CorrectedJetsFactory
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
 from scipy.optimize import curve_fit
 
 
@@ -127,6 +128,37 @@ class GaussianParametersReader:
             sigma_errs_list.append(sigma_errs)
 
         return pt_bin_list, sigmas_list, sigma_errs_list, self.filenames, self.dfs
+
+    
+
+def plot_unfitted_jer(sigmas, sigma_errs, filenames, pt_bin_centers, row, col):
+    '''
+    Function for plotting the JER without any fits or residual plots.
+    '''
+    
+    markers = ['o', 's', '^', 'D', 'x', '*', '>']
+    marker_size = 5 
+    
+    for i, (sigma, sigma_err, filename) in enumerate(zip(sigmas, sigma_errs, filenames)):
+        year = filename.split('_')[filename.split('_').index('parameters') + 1]
+        eta_range = filename.split('_')[filename.split('_').index('eta') + 1].split('-')
+        rho_range = filename.split('_')[filename.split('_').index('rho') + 1].split('-')
+        eta_labels = f"{eta_range[0]} < $\eta$ < {eta_range[1]}"
+        rho_labels = f"{rho_range[0]} < $\u03c1$ < {float(rho_range[1].replace('.csv', '')):.2f}"
+        marker = markers[i % len(markers)]
+        
+        plt.errorbar(pt_bin_centers, sigma, yerr=sigma_err, fmt=marker, markersize=marker_size, markerfacecolor='none', label=rho_labels)
+    
+    plt.title(year, fontsize=20)
+    plt.xlabel(r"$p_T$ [GeV]", fontsize=20)
+    plt.ylabel("JER", fontsize=20)
+    plt.xscale('log')
+    plt.xlim(left=10)
+    legend = plt.legend(title=eta_labels, title_fontsize='10', fontsize=10)
+    legend.get_title().set_fontweight('bold')
+    plt.gca().tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True, labelsize=15)
+    plt.gca().yaxis.set_minor_locator(AutoMinorLocator())
+    plt.show()
     
     
 
@@ -197,7 +229,7 @@ def plot_jer(pt_bin_list, sigmas_list, sigma_errs_list, filenames_list, jer_para
     '''
     Function for plotting the gaussian widths, their fit to a JER function, and the residuals between the two.
     '''
-    fig = plt.figure(figsize=(9, 9))
+    fig = plt.figure(figsize=(8, 8))
     gs = fig.add_gridspec(2, 1, height_ratios=[1, .25])
     axs0 = fig.add_subplot(gs[0])
     axs1 = fig.add_subplot(gs[1])
@@ -217,7 +249,7 @@ def plot_jer(pt_bin_list, sigmas_list, sigma_errs_list, filenames_list, jer_para
             fmt=marker, markersize=marker_size, markerfacecolor='none', label=rho_labels, color=color
         )
         
-        axs0.set_title(year)
+        axs0.set_title(year, fontsize=20)
         
         popt, pcov = curve_fit(jer_function, xdata=pt_bin_list[lower_pt_bin:upper_pt_bin], ydata=sigmas[lower_pt_bin:upper_pt_bin], p0=initial_guess, maxfev=1000000)
         
@@ -232,14 +264,14 @@ def plot_jer(pt_bin_list, sigmas_list, sigma_errs_list, filenames_list, jer_para
 
         axs1.errorbar(pt_bin_list[lower_pt_bin:upper_pt_bin], error, yerr=error_uncertainty, marker=marker, markersize=marker_size, markerfacecolor='none', color=color, linestyle='none')
         
-    axs0.set_ylabel("JER")
+    axs0.set_ylabel("JER", fontsize=20)
     axs0.set_xscale('log')
     axs0.set_xlim(lower_xlimit, upper_xlimit)
-    legend = axs0.legend(title=eta_labels, title_fontsize='12')
+    legend = axs0.legend(title=eta_labels, title_fontsize='15', fontsize=15)
     legend.get_title().set_fontweight('bold')
         
-    axs1.set_xlabel(r"$p_T$ [GeV]")
-    axs1.set_ylabel("(point - fit) / fit")
+    axs1.set_xlabel(r"$p_T$ [GeV]", fontsize=20)
+    axs1.set_ylabel("(point - fit) / fit", fontsize=20)
     axs1.set_xscale('log')
     axs1.set_xlim(lower_xlimit, upper_xlimit)
     axs1.set_ylim(-0.25, 0.25)
@@ -247,9 +279,10 @@ def plot_jer(pt_bin_list, sigmas_list, sigma_errs_list, filenames_list, jer_para
     axs1.axhline(y=0, color='k', linestyle='-')
     axs1.axhline(y=0.1, color='k', linestyle='--')
     axs1.axhline(y=-0.1, color='k', linestyle='--')
-    axs0.tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True)
-    axs1.tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True)
-    plt.subplots_adjust(hspace=0.1)
+    axs0.tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True, labelsize=15)
+    axs0.yaxis.set_minor_locator(AutoMinorLocator())
+    axs1.tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True, labelsize=15)
+    plt.subplots_adjust(hspace=0.15)
     plt.show()
 
         
@@ -270,13 +303,15 @@ def plot_jer_vs_eta(eta_bin_list, sigma_lists, sigma_errs_lists, labels_list, to
         plt.errorbar(eta_bin_list, sigmas, yerr=sigma_errs, fmt=marker, markersize=marker_size, markerfacecolor='none', label=pt_label)
         plt.plot(eta_bin_list, sigmas, color=color)
         
-    plt.title(f"{year}")
-    plt.xlabel(r"$\eta$")
-    plt.ylabel("JER")
-    plt.text(0.05, 0.95, rho_labels, transform=plt.gca().transAxes, ha='left', va='top', fontsize=11)
-    legend = plt.legend(title=f"$p_T$ Bins", loc='center left', bbox_to_anchor=(1, 0.5), ncol=1)
-    legend.get_title().set_fontsize('14') 
-    plt.gca().tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True)
+    plt.title(f"{year}", fontsize=20)
+    plt.xlabel(r"$\eta$", fontsize=20)
+    plt.ylabel("JER", fontsize=20)
+    plt.text(0.05, 0.95, rho_labels, transform=plt.gca().transAxes, ha='left', va='top', fontsize=15)
+    legend = plt.legend(title=f"$p_T$ Bins", loc='center left', bbox_to_anchor=(1, 0.5), ncol=1, title_fontsize='15', fontsize=15)
+    legend.get_title().set_fontweight('bold')
+    plt.gca().tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True, labelsize=15)
+    plt.gca().xaxis.set_minor_locator(AutoMinorLocator())
+    plt.gca().yaxis.set_minor_locator(AutoMinorLocator())
     plt.show()
 
     
@@ -297,12 +332,14 @@ def plot_jer_vs_rho(rho_bin_list, sigma_lists, sigma_errs_lists, labels_list, to
         plt.errorbar(rho_bin_list, sigmas, yerr=sigma_errs, fmt=marker, markersize=marker_size, markerfacecolor='none', label=pt_label)
         plt.plot(rho_bin_list, sigmas, color=color)
         
-    plt.title(f'{year}')
-    plt.xlabel(r"$\rho$")
-    plt.ylabel("JER")
-    plt.text(0.05, 0.95, eta_labels, transform=plt.gca().transAxes, ha='left', va='top', fontsize=11)
-    legend = plt.legend(title=f"$p_T$ Bins", loc='center left', bbox_to_anchor=(1, 0.5), ncol=1)
-    legend.get_title().set_fontsize('14') 
-    plt.gca().tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True)
+    plt.title(f'{year}', fontsize=20)
+    plt.xlabel(r"$\rho$", fontsize=20)
+    plt.ylabel("JER", fontsize=20)
+    plt.text(0.05, 0.95, eta_labels, transform=plt.gca().transAxes, ha='left', va='top', fontsize=15)
+    legend = plt.legend(title=f"$p_T$ Bins", loc='center left', bbox_to_anchor=(1, 0.5), ncol=1, title_fontsize='15', fontsize=15)
+    legend.get_title().set_fontweight('bold')
+    plt.gca().tick_params(axis='both', direction='in', which='both', bottom=True, top=True, left=True, right=True, labelsize=15)
+    plt.gca().xaxis.set_minor_locator(AutoMinorLocator())
+    plt.gca().yaxis.set_minor_locator(AutoMinorLocator())
     plt.show()
     
